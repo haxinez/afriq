@@ -1,97 +1,152 @@
 "use client"
-// src/components/layout/Header.tsx
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import NavMenu from './nav_menu';
-// import { Search, User, ShoppingBag } from 'lucide-react';
-// import NavMenu from './NavMenu';
 
 const Header: React.FC = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<Error | null>(null);
+  const [scrollProgress, setScrollProgress] = useState(0);
+  const [isOverHero, setIsOverHero] = useState(true);
 
-
-  // Track scroll position for header behavior
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
-    };
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
+  // Track scroll position and progress
+  const handleScroll = useCallback(() => {
+    const scrollY = window.scrollY;
+    setScrolled(scrollY > 20);
+    
+    // Calculate scroll progress
+    const totalScroll = document.documentElement.scrollHeight - window.innerHeight;
+    const progress = (scrollY / totalScroll) * 100;
+    setScrollProgress(progress);
   }, []);
 
-  // Toggle mobile menu
+  useEffect(() => {
+    try {
+      window.addEventListener('scroll', handleScroll);
+      setIsLoading(false);
+    } catch (err) {
+      setError(err as Error);
+      setIsLoading(false);
+    }
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [handleScroll]);
+
+  // Intersection Observer for hero section
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setIsOverHero(entry.isIntersecting);
+      },
+      { threshold: 0.1 }
+    );
+
+    const heroElement = document.querySelector('#hero-section');
+    if (heroElement) observer.observe(heroElement);
+    return () => observer.disconnect();
+  }, []);
+
   const toggleMobileMenu = () => {
     setIsMobileMenuOpen(!isMobileMenuOpen);
   };
 
+  if (error) return <div className="text-red-500">Error loading header</div>;
+  if (isLoading) return <div className="animate-pulse">Loading...</div>;
+
   return (
-    <motion.header
-      className="fixed w-full z-50 py-4 px-6"
-      initial={{ y: 0 }}
-      animate={{
-        y: 0,
-        backgroundColor: scrolled ? 'rgba(255, 255, 255, 0.95)' : 'rgba(255, 255, 255, 0.8)',
-        boxShadow: scrolled ? '0 4px 20px rgba(0, 0, 0, 0.08)' : '0 2px 10px rgba(0, 0, 0, 0.03)',
-      }}
-      transition={{ duration: 0.3 }}
-    >
-      <div className="max-w-7xl mx-auto flex items-center justify-between relative">
-        {/* Logo with subtle 3D effect */}
-        <Link href="/" className="relative">
-          <div
-            className="absolute -inset-2 rounded-lg"/>
-          <h1 
-            className="text-3xl font-serif font-bold text-dove-navy">
-            Afriq
-          </h1>
-        </Link>
-
-
-        {/* Main Navigation with 3D Hover Effects */}
-        <nav className="hidden md:flex items-center space-x-8">
-          <NavMenuItem href="/women" label="Women" />
-          <NavMenuItem href="/men" label="Men" />
-          <NavMenuItem href="/accessories" label="Accessories" />
-          <NavMenuItem href="/collections" label="Collections" />
-        </nav>
-
-        <ul className='hidden md:flex space-x-1 text-sm'>
-        <li><NavMenuItem href="/register" label="Register" /></li>
-        <li>|</li>
-        <li><NavMenuItem href="/login" label="Login" /></li>
-        </ul>
-
-        {/* Mobile Nav Toggle (only visible on mobile) */}
-        <div className="md:hidden">
-        <motion.button
-            className="text-dove-navy p-1 cursor-pointer"
-            onClick={toggleMobileMenu}
-           
-          >
-            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
-              />
-            </svg>
-          </motion.button>
-        </div>
-      </div>
+    <>
+      {/* Scroll Progress Indicator */}
       <motion.div
-        className="fixed inset-0 bg-amber-600/95 z-40 md:hidden  overflow-y-hidden "
-        initial={{ x: '10' }}
-        animate={{ x: isMobileMenuOpen ? 0 : '100%' }}
-        transition={{ duration: 0.3, ease: 'easeInOut' }}
+        className="fixed top-0 left-0 right-0 h-0.5 bg-dove-gold z-[60]"
+        style={{ scaleX: scrollProgress / 100, transformOrigin: '0%' }}
+      />
+
+      <motion.header
+        className={`fixed w-full z-50 py-4 px-6 ${
+          scrolled ? 'text-dove-navy' : 'text-dove-navy'
+        }`}
+        initial={{ y: 0 }}
+        animate={{
+          y: 0,
+          backgroundColor: scrolled 
+            ? isOverHero 
+              ? 'rgba(255, 255, 255, 0.95)'
+              : 'rgba(10, 35, 66, 0.95)'
+            : 'transparent',
+          boxShadow: scrolled 
+            ? '0 4px 20px rgba(0, 0, 0, 0.15)'
+            : 'none',
+        }}
+        transition={{ duration: 0.4 }}
       >
-        <div className="pt-20 px-6">
-          <NavMenu isMobile={true} onClose={toggleMobileMenu} />
+        <div className="max-w-7xl mx-auto flex items-center justify-between relative">
+          {/* Logo with subtle 3D effect */}
+          <Link href="/" className="relative">
+            <div className="absolute -inset-2 rounded-lg"/>
+            <h1 className="text-3xl font-serif font-bold text-dove-navy">
+              Afriq
+            </h1>
+          </Link>
+
+          
+
+          {/* Main Navigation with 3D Hover Effects */}
+          <nav className="hidden md:flex items-center space-x-8">
+            <NavMenuItem href="/women" label="Women" />
+            <NavMenuItem href="/men" label="Men" />
+            <NavMenuItem href="/accessories" label="Accessories" />
+            <NavMenuItem href="/collections" label="Collections" />
+          </nav>
+
+          <ul className='hidden md:flex space-x-1 text-sm'>
+            <li><NavMenuItem href="/register" label="Register" /></li>
+            <li>|</li>
+            <li><NavMenuItem href="/login" label="Login" /></li>
+          </ul>
+
+          {/* Mobile Nav Toggle */}
+          <div className="md:hidden">
+            <motion.button
+              className="text-dove-navy p-1 cursor-pointer"
+              onClick={toggleMobileMenu}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d={isMobileMenuOpen ? "M6 18L18 6M6 6l12 12" : "M4 6h16M4 12h16M4 18h16"}
+                />
+              </svg>
+            </motion.button>
+          </div>
         </div>
-      </motion.div>
-    </motion.header>
+
+        {/* Mobile Menu */}
+        <AnimatePresence>
+          {isMobileMenuOpen && (
+            <motion.div
+              className="fixed inset-0 bg-dove-navy/95 z-40 md:hidden overflow-y-hidden"
+              initial={{ opacity: 0, x: '100%' }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: '100%' }}
+              transition={{ 
+                duration: 0.4, 
+                ease: [0.4, 0, 0.2, 1] 
+              }}
+            >
+              <div className="pt-20 px-6">
+                <NavMenu isMobile={true} onClose={toggleMobileMenu} />
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.header>
+    </>
   );
 };
 
@@ -100,11 +155,8 @@ const NavMenuItem: React.FC<{ href: string; label: string }> = ({ href, label })
   return (
     <Link href={href} className="relative">
       <motion.span 
-        className="text-dove-navy font-sans text-sm relative inline-block"
-        whileHover={{ 
-          y: -1,
-          textShadow: "0px 2px 4px rgba(10, 35, 66, 0.2)"
-        }}
+        className="text-dove-light font-sans text-sm relative inline-block"
+       
       >
         {label}
         <motion.span 
@@ -114,28 +166,6 @@ const NavMenuItem: React.FC<{ href: string; label: string }> = ({ href, label })
         />
       </motion.span>
     </Link>
-  );
-};
-
-// Helper component for icons with glow effect
-export const NavIcon: React.FC<{ icon: React.ReactNode }> = ({ icon }) => {
-  return (
-    <motion.div
-      className="relative cursor-pointer"
-      whileHover={{ scale: 1.1 }}
-      whileTap={{ scale: 0.95 }}
-    >
-      <motion.div 
-        className="absolute inset-0 rounded-full" 
-        animate={{ 
-          boxShadow: ["0 0 0 rgba(213, 160, 33, 0)", "0 0 10px rgba(213, 160, 33, 0.5)", "0 0 0 rgba(213, 160, 33, 0)"] 
-        }}
-        transition={{ duration: 2, repeat: Infinity }}
-      />
-      <div className="text-dove-navy">
-        {icon}
-      </div>
-    </motion.div>
   );
 };
 

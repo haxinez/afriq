@@ -1,6 +1,6 @@
 "use client"
 // src/components/layout/HeroSection.tsx
-import { useRef, useEffect, useState } from 'react';
+import { useRef, useEffect, useState, useMemo } from 'react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -10,6 +10,8 @@ const HeroSection: React.FC = () => {
   const [mousePosition, setMousePosition] = useState({ x: 0, y: 0 });
   const [scrollY, setScrollY] = useState(0);
   const [currentImage, setCurrentImage] = useState(0);
+   const [imagesLoaded, setImagesLoaded] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
 
   // Carousel images for African apparel theme
   const images = [
@@ -18,11 +20,15 @@ const HeroSection: React.FC = () => {
     '/images/Hero_Background3.jpg', // Kaftan in savanna
   ];
 
+  
+
   // Auto-rotate carousel every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentImage((prev) => (prev + 1) % images.length);
     }, 5000);
+
+    
 
     return () => clearInterval(interval);
   }, [images.length]);
@@ -61,20 +67,37 @@ const HeroSection: React.FC = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+// After all useEffect hooks and before return
+const backgroundStyle = useMemo(() => ({
+  background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, 
+    rgba(193, 68, 56, 0.15), rgba(10, 35, 66, 0.8) 70%)`,
+  zIndex: 1,
+}), [mousePosition.x, mousePosition.y]);
 
+if (error) {
+  return (
+    <div className="flex items-center justify-center h-screen">
+      <p>Error loading hero section. Please refresh the page.</p>
+    </div>
+  );
+}
 
   return (
     <div
       ref={containerRef}
       className="relative h-screen w-full overflow-hidden bg-dove-navy "
+       role="region"
+      aria-label="Hero carousel section"
     >
+       {!imagesLoaded && (
+        <div className="absolute inset-0 bg-dove-navy animate-pulse">
+          <div className="h-full w-full bg-gradient-to-r from-dove-navy/50 to-dove-navy" />
+        </div>
+      )}
       {/* Background lighting effect with terracotta tint */}
       <div
         className="absolute inset-0"
-        style={{
-          background: `radial-gradient(circle at ${mousePosition.x}px ${mousePosition.y}px, rgba(193, 68, 56, 0.15), rgba(10, 35, 66, 0.8) 70%)`,
-          zIndex: 1,
-        }}
+        style={backgroundStyle}
       />
 
       {/* Carousel background with parallax */}
@@ -101,6 +124,9 @@ const HeroSection: React.FC = () => {
                 fill
                 style={{ objectFit: 'cover' }}
                 priority={index === 0}
+                onLoadingComplete={() => {
+    if (index === images.length - 1) setImagesLoaded(true);
+  }}
               />
             </div>
           ))}
