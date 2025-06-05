@@ -1,26 +1,107 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+
+/* 
+@font-face {
+  font-family: 'Poppins';
+  src: url('../public/fonts/Poppins_Regular.ttf');
+  font-weight: normal;
+  font-style: normal;
+} */
+
+@theme inline{
+  --font-poppins:var(--font-poppins)
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+@theme {
+  /* Dove Primary Color  */
+  --color-dove-navy:#0A2342;
+  --color-dove-gold:#D5A021;
+  --color-dove-ivory:#E24D3B;
+  --color-dove-light:#EAE7D9;
+  --color-dove-terra:#C14438  
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+/* Ensure smooth opacity transitions for carousel images */
+/* globals.css */
+.bg-terracotta {
+  background-color: #C14438;
+}
+
+.border-terracotta\/30 {
+  border-color: rgba(193, 68, 56, 0.3);
+}
+
+.bg-terracotta\/50 {
+  background-color: rgba(193, 68, 56, 0.5);
+}
+
+/* Ensure smooth opacity transitions for carousel images */
+.transition-opacity {
+  transition: opacity 1s ease-in-out;
+}
+
+
+/* globals.css */
+.bg-dove-navy {
+  background-color: #0A2342;
+}
+
+.text-dove-ivory {
+  color: #F4F1DE;
+}
+
+.text-dove-ivory\/80 {
+  color: rgba(244, 241, 222, 0.8);
+}
+
+.border-dove-gold\/20 {
+  border-color: rgba(212, 160, 23, 0.2);
+}
+
+.bg-terracotta {
+  background-color: #C14438;
+}
+
+.border-terracotta\/30 {
+  border-color: rgba(193, 68, 56, 0.3);
+}
+
+.bg-terracotta\/20 {
+  background-color: rgba(193, 68, 56, 0.2);
+}
+
+.bg-terracotta\/50 {
+  background-color: rgba(193, 68, 56, 0.5);
+}
+
+/* Smooth transitions for catalogue images */
+.transition-opacity {
+  transition: opacity 1s ease-in-out;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 768px) {
+  .grid-cols-3 {
+    grid-template-columns: 1fr;
+  }
+  .grid-col-2{
+    grid-template-columns: 1fr;
   }
 }
 
-body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+@keyframes wave {
+  0% {
+    transform: translateX(0);
+  }
+  50% {
+    transform: translateX(-25%);
+  }
+  100% {
+    transform: translateX(0);
+  }
+}
+
+.animate-wave {
+  animation: wave 10s ease-in-out infinite;
 }

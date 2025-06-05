@@ -1,0 +1,469 @@
+ 
+// src/pages/collections.tsx
+import { useRef, useState, useEffect, useCallback } from 'react';
+import { motion, useInView, MotionStyle, Variants } from 'framer-motion';
+import { useRouter } from 'next/router';
+import Link from 'next/link';
+import Image from 'next/image';
+
+// Enums for filter options
+enum CategoryFilter {
+  All = 'All',
+  Womens = 'Womens',
+  Mens = 'Mens',
+  Accessories = 'Accessories',
+  Kids = 'Kids',
+  Footwear = 'Footwear',
+}
+
+enum PriceFilter {
+  All = 'All',
+  Low = '0-50',
+  Medium = '50-100',
+  High = '100+',
+}
+
+// Interface for collection items
+interface CollectionItem {
+  id: string;
+  title: string;
+  image: string;
+  description: string;
+  price: string;
+  link: string;
+  category: CategoryFilter;
+  priceRange: string;
+}
+
+// Component props
+interface CollectionsProps {}
+
+// Animation variants types
+interface CardVariants extends Variants {
+  hidden: { opacity: number; y: number };
+  visible: (i: number) => { opacity: number; y: number; transition: { delay: number; duration: number; ease: string } };
+}
+
+interface ButtonVariants extends Variants {
+  hidden: { opacity: number; y: number };
+  visible: { opacity: number; y: number; transition: { duration: number; delay: number } };
+  hover: { scale: number; transition: { duration: number } };
+  tap: { scale: number };
+}
+
+interface DropdownVariants extends Variants {
+  hidden: { opacity: number; height: number };
+  visible: { opacity: number; height: string; transition: { duration: number; ease: string } };
+}
+
+const Collections: React.FC<CollectionsProps> = () => {
+  const router = useRouter();
+  const ref = useRef<HTMLDivElement>(null);
+  const loadMoreRef = useRef<HTMLDivElement>(null);
+  const isInView = useInView(ref, { once: true, amount: 0.2 });
+  const isLoadMoreInView = useInView(loadMoreRef, { amount: 0.5 });
+
+  // State
+  const [displayedItems, setDisplayedItems] = useState<number>(6);
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>(CategoryFilter.All);
+  const [priceFilter, setPriceFilter] = useState<PriceFilter>(PriceFilter.All);
+  const [isPriceDropdownOpen, setIsPriceDropdownOpen] = useState<boolean>(false);
+  const [flippedCards, setFlippedCards] = useState<{ [key: string]: boolean }>({});
+
+  // Collection items
+  const allCollections: CollectionItem[] = [
+    {
+      id: 'ankara-dress',
+      title: 'Ankara Maxi Dress',
+      image: '/images/ankara-maxi-dress.jpg',
+      description: 'Vibrant geometric patterns, perfect for summer.',
+      price: '$89.99',
+      link: '/collections/womens/dresses/ankara-maxi',
+      category: CategoryFilter.Womens,
+      priceRange: PriceFilter.Medium,
+    },
+    {
+      id: 'kente-shirt',
+      title: 'Kente Shirt',
+      image: '/images/kente-shirt.jpg',
+      description: 'Rich woven fabric with bold colors.',
+      price: '$59.99',
+      link: '/collections/mens/shirts/kente',
+      category: CategoryFilter.Mens,
+      priceRange: PriceFilter.Medium,
+    },
+    {
+      id: 'beaded-headwrap',
+      title: 'Beaded Headwrap',
+      image: '/images/beaded-headwrap.jpg',
+      description: 'Intricate beadwork, vibrant design.',
+      price: '$29.99',
+      link: '/collections/accessories/headwraps/beaded',
+      category: CategoryFilter.Accessories,
+      priceRange: PriceFilter.Low,
+    },
+    {
+      id: 'dashiki-tunic',
+      title: 'Dashiki Tunic',
+      image: '/images/dashiki-tunic.jpg',
+      description: 'Traditional tunic with modern flair.',
+      price: '$69.99',
+      link: '/collections/mens/tunics/dashiki',
+      category: CategoryFilter.Mens,
+      priceRange: PriceFilter.Medium,
+    },
+    {
+      id: 'adire-kaftan',
+      title: 'Adire Kaftan',
+      image: '/images/adire-kaftan.jpg',
+      description: 'Indigo-dyed elegance for any occasion.',
+      price: '$99.99',
+      link: '/collections/womens/kaftans/adire',
+      category: CategoryFilter.Womens,
+      priceRange: PriceFilter.Medium,
+    },
+    {
+      id: 'woven-necklace',
+      title: 'Woven Necklace',
+      image: '/images/woven-necklace.jpg',
+      description: 'Handcrafted with African motifs.',
+      price: '$39.99',
+      link: '/collections/accessories/jewelry/woven',
+      category: CategoryFilter.Accessories,
+      priceRange: PriceFilter.Low,
+    },
+    {
+      id: 'kids-dashiki',
+      title: 'Kids’ Dashiki',
+      image: '/images/kids-dashiki.jpg',
+      description: 'Colorful dashiki for young trendsetters.',
+      price: '$34.99',
+      link: '/collections/kids/dashikis',
+      category: CategoryFilter.Kids,
+      priceRange: PriceFilter.Low,
+    },
+    {
+      id: 'leather-sandals',
+      title: 'Leather Sandals',
+      image: '/images/leather-sandals.jpg',
+      description: 'Handcrafted sandals with beaded details.',
+      price: '$49.99',
+      link: '/collections/footwear/sandals',
+      category: CategoryFilter.Footwear,
+      priceRange: PriceFilter.Low,
+    },
+    {
+      id: 'mudcloth-scarf',
+      title: 'Mudcloth Scarf',
+      image: '/images/mudcloth-scarf.jpg',
+      description: 'Bold patterns in earthy tones.',
+      price: '$44.99',
+      link: '/collections/accessories/scarves/mudcloth',
+      category: CategoryFilter.Accessories,
+      priceRange: PriceFilter.Low,
+    },
+  ];
+
+  // Filter collections
+  const filteredCollections: CollectionItem[] = allCollections.filter((item) => {
+    const matchesCategory = categoryFilter === CategoryFilter.All || item.category === categoryFilter;
+    const matchesPrice = priceFilter === PriceFilter.All || item.priceRange === priceFilter;
+    return matchesCategory && matchesPrice;
+  });
+
+  // Infinite scroll logic
+  useEffect(() => {
+    if (isLoadMoreInView && displayedItems < filteredCollections.length) {
+      setDisplayedItems((prev) => Math.min(prev + 6, filteredCollections.length));
+    }
+  }, [isLoadMoreInView, filteredCollections.length]);
+
+  // Animation variants
+  const cardVariants: CardVariants = {
+    hidden: { opacity: 0, y: 50 },
+    visible: (i: number) => ({
+      opacity: 1,
+      y: 0,
+      transition: { delay: i * 0.1, duration: 0.6, ease: 'easeOut' },
+    }),
+  };
+
+  const shopNowButtonVariants: ButtonVariants = {
+    hidden: { opacity: 0, y: 20 },
+    visible: { opacity: 1, y: 0, transition: { duration: 0.8, delay: 0.6 } },
+    hover: { scale: 1.05, transition: { duration: 0.3 } },
+    tap: { scale: 0.98 },
+  };
+
+  const dropdownVariants: DropdownVariants = {
+    hidden: { opacity: 0, height: 0 },
+    visible: { opacity: 1, height: 'auto', transition: { duration: 0.3, ease: 'easeOut' } },
+  };
+
+  // Handle filter clicks
+  const handleCategoryFilter = useCallback((category: CategoryFilter) => {
+    setCategoryFilter(category);
+    setDisplayedItems(6);
+  }, []);
+
+  const handlePriceFilter = useCallback((price: PriceFilter) => {
+    setPriceFilter(price);
+    setDisplayedItems(6);
+    setIsPriceDropdownOpen(false);
+  }, []);
+
+  // Handle card flip on mobile
+  const toggleCardFlip = useCallback((id: string) => {
+    setFlippedCards((prev) => ({ ...prev, [id]: !prev[id] }));
+  }, []);
+
+  return (
+    <section ref={ref} className="py-16 bg-dove-navy text-dove-ivory min-h-screen">
+      <div className="max-w-7xl mx-auto px-6">
+        {/* Back Arrow */}
+        <motion.button
+          className="flex items-center text-dove-gold mb-6 hover:text-terracotta focus:outline-none"
+          onClick={() => router.back()}
+          whileHover={{ scale: 1.1 }}
+          whileTap={{ scale: 0.9 }}
+          aria-label="Go back to previous page"
+        >
+          <svg className="w-6 h-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M15 19l-7-7 7-7" />
+          </svg>
+          Back
+        </motion.button>
+
+        <motion.h1
+          className="text-5xl font-serif font-bold text-center mb-8"
+          initial={{ opacity: 0, y: -20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+          transition={{ duration: 0.8 }}
+        >
+          Our Collections
+        </motion.h1>
+
+        {/* Filter Bar */}
+        <motion.div
+          className="mb-12"
+          initial={{ opacity: 0, y: -20 }}
+          animate={isInView ? { opacity: 1, y: 0 } : { opacity: 0, y: -20 }}
+          transition={{ duration: 0.8, delay: 0.2 }}
+        >
+          {/* Category Filters */}
+          <div className="flex flex-wrap gap-2 justify-center md:justify-start mb-4 overflow-x-auto whitespace-nowrap pb-2">
+            {Object.values(CategoryFilter).map((cat) => (
+              <div
+                key={cat}
+                className={`relative px-4 py-2 rounded border border-dove-gold/20 text-dove-ivory font-medium text-lg cursor-pointer ${
+                  categoryFilter === cat ? 'bg-terracotta' : 'bg-dove-navy'
+                }`}
+                onClick={() => handleCategoryFilter(cat)}
+                role="button"
+                tabIndex={0}
+                aria-label={`Filter by ${cat}`}
+                onKeyDown={(e) => e.key === 'Enter' && handleCategoryFilter(cat)}
+              >
+                {cat}
+                {categoryFilter === cat && (
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-1 bg-dove-gold"
+                    layoutId="categoryUnderline"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Price Filters */}
+          <div className="flex flex-wrap gap-2 justify-center md:justify-start overflow-x-auto whitespace-nowrap pb-2">
+            {Object.values(PriceFilter).map((price) => (
+              <div
+                key={price}
+                className={`relative px-4 py-2 rounded border border-dove-gold/20 text-dove-ivory font-medium text-lg cursor-pointer ${
+                  priceFilter === price ? 'bg-terracotta' : 'bg-dove-navy'
+                }`}
+                onClick={() => handlePriceFilter(price)}
+                role="button"
+                tabIndex={0}
+                aria-label={`Filter by price ${price}`}
+                onKeyDown={(e) => e.key === 'Enter' && handlePriceFilter(price)}
+              >
+                ${price}
+                {priceFilter === price && (
+                  <motion.div
+                    className="absolute bottom-0 left-0 right-0 h-1 bg-dove-gold"
+                    layoutId="priceUnderline"
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    transition={{ duration: 0.3 }}
+                  />
+                )}
+              </div>
+            ))}
+          </div>
+
+          {/* Price Filter Dropdown (Desktop Only) */}
+          <div className="hidden md:block relative w-48 mx-auto md:mx-0 mt-4">
+            <motion.button
+              className="w-full py-3 px-4 bg-dove-navy border border-dove-gold/20 text-dove-ivory rounded font-medium flex justify-between items-center text-lg"
+              onClick={() => setIsPriceDropdownOpen((prev) => !prev)}
+              whileHover={{ scale: 1.02 }}
+              whileTap={{ scale: 0.98 }}
+              aria-label="Toggle price filter dropdown"
+            >
+              <span>Price: ${priceFilter}</span>
+              <svg
+                className={`w-5 h-5 transform transition-transform ${isPriceDropdownOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7" />
+              </svg>
+            </motion.button>
+            <motion.div
+              className="absolute top-full left-0 w-full bg-dove-navy border border-dove-gold/20 rounded mt-2 z-10 overflow-hidden"
+              variants={dropdownVariants}
+              initial="hidden"
+              animate={isPriceDropdownOpen ? 'visible' : 'hidden'}
+            >
+              {Object.values(PriceFilter).map((price) => (
+                <motion.button
+                  key={price}
+                  className={`w-full px-4 py-2 text-dove-ivory text-left hover:bg-terracotta/50 ${
+                    priceFilter === price ? 'bg-terracotta' : ''
+                  }`}
+                  onClick={() => handlePriceFilter(price)}
+                  whileHover={{ backgroundColor: '#C14438' }}
+                  transition={{ duration: 0.2 }}
+                  aria-label={`Select price filter ${price}`}
+                >
+                  ${price}
+                </motion.button>
+              ))}
+            </motion.div>
+          </div>
+        </motion.div>
+
+        {/* Collections Grid */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+          {filteredCollections.slice(0, displayedItems).map((item, index) => (
+            <Link key={item.id} href={item.link} passHref>
+              <motion.div
+                className="flip-card relative"
+                custom={index}
+                variants={cardVariants}
+                initial="hidden"
+                animate={isInView ? 'visible' : 'hidden'}
+                style={{ perspective: '1000px' } as MotionStyle}
+                onClick={() => toggleCardFlip(item.id)} // Toggle flip on tap
+                role="button"
+                tabIndex={0}
+                aria-label={`View details for ${item.title}`}
+                onKeyDown={(e) => e.key === 'Enter' && toggleCardFlip(item.id)}
+              >
+                {/* African textile overlay */}
+                <div
+                  className="absolute inset-0 opacity-10 z-0"
+                  style={{
+                    backgroundImage: `url('/images/ankara-pattern.png')`,
+                    backgroundSize: 'cover',
+                  }}
+                />
+                {/* Adinkra symbol border */}
+                <div
+                  className="absolute inset-0 opacity-20 z-0 pointer-events-none"
+                  style={{
+                    backgroundImage: `url('/images/adinkra-border.png')`,
+                    backgroundSize: 'contain',
+                    backgroundRepeat: 'repeat',
+                  }}
+                />
+                <motion.div
+                  className="flip-card-inner"
+                  animate={{ rotateY: flippedCards[item.id] ? 180 : 0 }}
+                  transition={{ duration: 0.8 }}
+                >
+                  {/* Front Side */}
+                  <div className="flip-card-front bg-dove-navy border-dove-gold">
+                    <div className="relative w-full h-60">
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        style={{ objectFit: 'cover', borderRadius: '1rem' }}
+                        priority={index < 3}
+                        sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+                      />
+                      <motion.div
+                        className="absolute inset-0 bg-terracotta/20"
+                        initial={{ opacity: 0 }}
+                        whileHover={{ opacity: 1 }}
+                        transition={{ duration: 0.3 }}
+                      />
+                    </div>
+                    <p className="title text-dove-ivory font-serif">{item.title}</p>
+                    <p className="text-dove-gold font-medium">{item.price}</p>
+                  </div>
+                  {/* Back Side */}
+                  <div className="flip-card-back bg-dove-navy border-dove-gold">
+                    <p className="title text-dove-ivory font-serif">{item.title}</p>
+                    <p className="text-dove-ivory/80 text-sm px-4">{item.description}</p>
+                    <motion.button
+                      className="mt-4 bg-terracotta text-dove-ivory py-2 px-4 rounded font-medium"
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      aria-label={`Shop now for ${item.title}`}
+                    >
+                      Shop Now
+                    </motion.button>
+                  </div>
+                </motion.div>
+              </motion.div>
+            </Link>
+          ))}
+        </div>
+
+        {/* Load More Trigger for Infinite Scroll */}
+        {displayedItems < filteredCollections.length && (
+          <div ref={loadMoreRef} className="h-10 mt-8" />
+        )}
+
+        {/* Shop Now Button */}
+        <div className="mt-12 text-center">
+          <Link href="/shop" passHref>
+            <motion.div
+              className="relative inline-block group"
+              variants={shopNowButtonVariants}
+              initial="hidden"
+              animate={isInView ? 'visible' : 'hidden'}
+              whileHover="hover"
+              whileTap="tap"
+            >
+              <motion.div
+                className="absolute -inset-1 rounded bg-terracotta/50 blur-sm -z-10"
+                animate={{ opacity: [0.4, 0.6, 0.4] }}
+                transition={{ duration: 2, repeat: Infinity }}
+              />
+              <div className="bg-terracotta text-dove-ivory py-3 px-8 font-medium rounded relative overflow-hidden">
+                <motion.div
+                  className="absolute inset-0 bg-gradient-to-r from-transparent via-dove-ivory/20 to-transparent"
+                  initial={{ x: -200 }}
+                  animate={{ x: 200 }}
+                  transition={{ duration: 1.5, repeat: Infinity, repeatDelay: 3 }}
+                />
+                SHOP NOW
+              </div>
+            </motion.div>
+          </Link>
+        </div>
+      </div>
+    </section>
+  );
+};
+
+export default Collections;

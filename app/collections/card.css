@@ -1,0 +1,161 @@
+.bg-dove-navy {
+    background-color: #0A2342;
+  }
+  
+  .text-dove-ivory {
+    color: #F4F1DE;
+  }
+  
+  .text-dove-ivory\/80 {
+    color: rgba(244, 241, 222, 0.8);
+  }
+  
+  .border-dove-gold\/20 {
+    border-color: rgba(212, 160, 23, 0.2);
+  }
+  
+  .text-dove-gold {
+    color: #D4A017;
+  }
+  
+  .bg-terracotta {
+    background-color: #C14438;
+  }
+  
+  .border-dove-gold {
+    border-color: #D4A017;
+  }
+  
+  .border-terracotta {
+    border-color: #C14438;
+  }
+  
+  .bg-terracotta\/20 {
+    background-color: rgba(193, 68, 56, 0.2);
+  }
+  
+  .bg-terracotta\/50 {
+    background-color: rgba(193, 68, 56, 0.5);
+  }
+  
+  .transition-opacity {
+    transition: opacity 1s ease-in-out;
+  }
+  
+  /* Uiverse Flip Card Styles Adapted for African Heritage */
+  .flip-card {
+    background-color: transparent;
+    width: 190px;
+    height: 254px;
+    perspective: 1000px;
+    font-family: 'Playfair Display', serif;
+  }
+  
+  .title {
+    font-size: 1.5em;
+    font-weight: 900;
+    text-align: center;
+    margin: 0;
+  }
+  
+  .flip-card-inner {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    transform-style: preserve-3d;
+  }
+  
+  .flip-card-front,
+  .flip-card-back {
+    box-shadow: 0 8px 14px 0 rgba(212, 160, 23, 0.2); /* dove-gold shadow */
+    position: absolute;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+    height: 100%;
+    -webkit-backface-visibility: hidden;
+    backface-visibility: hidden;
+    border: 1px solid #D4A017; /* dove-gold */
+    border-radius: 1rem;
+    padding: 1rem;
+  }
+  
+  .flip-card-front {
+    background: #0A2342; /* dove-navy */
+    color: #F4F1DE; /* dove-ivory */
+  }
+  
+  .flip-card-back {
+    background: #0A2342; /* dove-navy */
+    color: #F4F1DE; /* dove-ivory */
+    transform: rotateY(180deg);
+  }
+  
+  /* Responsive Adjustments */
+  @media (max-width: 768px) {
+    .grid-cols-3 {
+      grid-template-columns: 1fr;
+    }
+    .grid-cols-2 {
+      grid-template-columns: 1fr;
+    }
+    .text-5xl {
+      font-size: 2.5rem;
+    }
+    .text-xl {
+      font-size: 1.25rem;
+    }
+    .py-16 {
+      padding-top: 3rem;
+      padding-bottom: 3rem;
+    }
+    .flip-card {
+      width: 100%;
+      max-width: 300px;
+      height: 350px;
+      margin: 0 auto;
+    }
+    .flip-card-front,
+    .flip-card-back {
+      padding: 1.5rem;
+    }
+    /* Disable hover-based flip on mobile */
+    .flip-card:hover .flip-card-inner {
+      transform: none;
+    }
+  }
+  
+  /* Scrollable filter list on mobile */
+  .overflow-x-auto::-webkit-scrollbar {
+    height: 6px;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-track {
+    background: #0A2342;
+  }
+  
+  .overflow-x-auto::-webkit-scrollbar-thumb {
+    background: #D4A017;
+    border-radius: 3px;
+  }
+  
+  /* Dropdown styles (desktop only) */
+  .dropdown-menu {
+    max-height: 200px;
+    overflow-y: auto;
+  }
+  
+  .dropdown-menu::-webkit-scrollbar {
+    width: 6px;
+  }
+  
+  .dropdown-menu::-webkit-scrollbar-track {
+    background: #0A2342;
+  }
+  
+  .dropdown-menu::-webkit-scrollbar-thumb {
+    background: #D4A017;
+    border-radius: 3px;
+  }
